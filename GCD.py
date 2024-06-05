@@ -52,7 +52,7 @@ class GCDDataset(Dataset):
                 prime_data.append(tmp)
         return data, prime_data
     
-    def __init__(self, config, split, seed, defined_tensor_train_data=None, save_file=""):
+    def __init__(self, config, split, seed, defined_tensor_train_data=None, save_file="", save_test_data_file=""):
         self.seed = seed
         self.config = config
         self.split = split # train/test
@@ -83,6 +83,12 @@ class GCDDataset(Dataset):
             with open(save_file, "wb") as file:
                 pickle.dump(train_data, file)
                 print(f"successfully saved data to {save_file}")
+
+        if save_test_data_file:
+            import pickle
+            with open(save_test_data_file, "wb") as file:
+                pickle.dump(test_data, file)
+                print(f"successfully saved test data to {save_test_data_file}")
 
         if defined_tensor_train_data:
             import pickle

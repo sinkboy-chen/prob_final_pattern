@@ -73,8 +73,8 @@ if __name__ == '__main__':
     set_seed(config.system.init_seed)
 
     # TODO: try different seed to adjust the data order of train/test-set
-    train_dataset = GCDDataset(config.data, split='train', seed=0, defined_tensor_train_data="GCDdata/init.pkl")
-    test_dataset  = GCDDataset(config.data, split='test', seed=0)
+    train_dataset = GCDDataset(config.data, split='train', seed=0)
+    test_dataset  = GCDDataset(config.data, split='test', seed=0, save_test_data_file="GCDdata/testdata/testing.pkl")
 
     # set the correct vocab size: 10, block size: chickenrabbit -> 10, gcd -> 6
     config.model.vocab_size = train_dataset.get_vocab_size()
