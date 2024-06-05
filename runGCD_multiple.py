@@ -111,7 +111,7 @@ if __name__ == '__main__':
             stop_iteration, duration = evaluate_train_data(f"{directory}/{file}")
             write_log(
                 directory,
-                f"iteration: {stop_iteration}, train: {file}, duration: {duration}, host: {socket.gethostname()}"
+                f"iteration: {stop_iteration}, train: {file}, duration: {duration}, host: {socket.gethostname()}, gpu: {os.getenv('CUDA_VISIBLE_DEVICES')}"
                 )
         except Exception as e:
             write_log(directory, f"{file} failed to evaluate\n{e}\n")
