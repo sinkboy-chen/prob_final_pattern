@@ -1,6 +1,7 @@
 import pickle
 import numpy as np
 import random
+import torch
 
 def get_answer(row):
     answer = row[4]*10+row[5]
@@ -50,6 +51,8 @@ def make_data(save_path):
     # count = count_answer(data[:20*64])
     # count = count_answer(data[20*64:40*64], count)
     # count = count_answer(data[40*64:], count)
+
+    data = torch.tensor(data)
 
     with open(save_path, "wb") as file:
         pickle.dump(data, file)
