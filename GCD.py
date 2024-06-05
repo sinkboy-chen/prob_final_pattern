@@ -14,7 +14,6 @@ from torch.utils.data.dataloader import DataLoader
 torch.set_printoptions(profile="full")
 
 from mingpt.utils import set_seed, setup_logging, CfgNode as CN
-import setting
 import time
 
 class GCDDataset(Dataset):
@@ -53,7 +52,7 @@ class GCDDataset(Dataset):
                 prime_data.append(tmp)
         return data, prime_data
     
-    def __init__(self, config, split, seed):
+    def __init__(self, config, split, seed, defined_tensor_train_data=None, save_file=""):
         self.seed = seed
         self.config = config
         self.split = split # train/test
@@ -76,6 +75,20 @@ class GCDDataset(Dataset):
 
         test_data = torch.tensor(test_data, dtype=torch.long)
         train_data = torch.tensor(train_data, dtype=torch.long)
+
+        assert not (save_file and defined_tensor_train_data)
+
+        if save_file:
+            import pickle
+            with open(save_file, "wb") as file:
+                pickle.dump(train_data, file)
+                print(f"successfully saved data to {save_file}")
+
+        if defined_tensor_train_data:
+            import pickle
+            with open(defined_tensor_train_data, "rb") as file:
+                train_data = pickle.load(file)
+            print(f"using defined training data")
         
         self.ixes = test_data if split == 'test' else train_data
 
