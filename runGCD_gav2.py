@@ -1,3 +1,6 @@
+# evaluate all the data.pkl in a folder and save it to folder/log.txt
+# iteration, pkl_name, evaluation time, machine
+
 import os
 import sys
 import json
@@ -16,6 +19,10 @@ from mingpt.model_multiplier import GPT
 from mingpt.trainer_multiplier import Trainer
 from mingpt.utils import set_seed, setup_logging, CfgNode as CN
 from itertools import permutations
+
+import socket
+import time
+import pickle
 
 # -----------------------------------------------------------------------------
 
@@ -62,10 +69,13 @@ def batch_end_callback(trainer, model, train_dataset, test_dataset):
         model.train()
     return -1
 
-# -----------------------------------------------------------------------------
+def write_log(directory, message):
+    with open(f"{directory}/log.txt", "a") as file:
+        file.write(f"{message}\n")
+        print(f"{message}")
 
-if __name__ == '__main__':
-
+def evaluate_train_data(train_data_path):
+    start = time.time()
     config = get_config()
     setup_logging(config)
 
@@ -73,7 +83,7 @@ if __name__ == '__main__':
     set_seed(config.system.init_seed)
 
     # TODO: try different seed to adjust the data order of train/test-set
-    train_dataset = GCDDataset(config.data, split='train', seed=0)
+    train_dataset = GCDDataset(config.data, split='train', seed=0, defined_tensor_train_data=train_data_path)
     test_dataset  = GCDDataset(config.data, split='test', seed=0)
 
     # set the correct vocab size: 10, block size: chickenrabbit -> 10, gcd -> 6
@@ -87,6 +97,62 @@ if __name__ == '__main__':
         print(f'The final iteration of this round is {stop_iteration}!')
     else:
         print('It cannot reach 0.9 acc within max_iteration steps...')
+    
+    end = time.time()
+    return stop_iteration, end-start
+
+def shuffle_tensor(num_shuffle, data):
+    data = data.numpy()
+    data = list(data)
+
+    # process on data, no return value
+    num_data = len(data)
+    assert(num_data>=num_shuffle)
+    shuffle_index = random.sample(range(num_data), num_shuffle)
+    shuffle_value = []
+    for index in shuffle_index:
+        shuffle_value.append(data[index])
+    random.shuffle(shuffle_value)
+    for i in range(num_shuffle):
+        data[shuffle_index[i]] = shuffle_value[i]
+
+    data = np.array(data)
+    data = torch.tensor(data)
+    return data
+
+def mutate(original_data_path, new_data_path, num_shuffle):
+    with open(original_data_path, "rb") as file:
+        data = pickle.load(file)
+    data = shuffle_tensor(num_shuffle, data)
+    with open(new_data_path, "wb") as file:
+        pickle.dump(data, file)
+
+# -----------------------------------------------------------------------------
+
+if __name__ == '__main__':
+    original_data_path = "GCDdata/init.pkl"
+    directory = "GCDdata/ga/v2"
+    best_iteration = 25000
+
+    for i in range(100, 0, -1):
+        new_data_path = f"{directory}/{i}.pkl"
+        mutate(original_data_path, new_data_path, 5*i)
+        write_log(directory, f"{new_data_path} made.")
+        write_log(directory, f"evaluating {new_data_path}")
+        stop_iteration, duration = evaluate_train_data(new_data_path)
+        write_log(
+                directory,
+                f"iteration: {stop_iteration}, train: {new_data_path}, duration: {duration}, host: {socket.gethostname()}, gpu: {os.getenv('CUDA_VISIBLE_DEVICES')}"
+                )
+        if stop_iteration!=-1 and stop_iteration<=best_iteration:
+            original_data_path = new_data_path
+            best_iteration = stop_iteration
+            write_log(directory, "")
+            write_log(directory, f"best iteration: {best_iteration}, train: {original_data_path}")
+            write_log(directory, "")
+
+
+    
 
 
     
