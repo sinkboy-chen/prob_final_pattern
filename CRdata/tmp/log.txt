@@ -1,1 +1,2 @@
-evaluating CRdata/tmp/gcd_cr_tensor.pkl
+evaluating CRdata/tmp/cr_g4_child9_tensor.pkl
+iteration: 11400, train: cr_g4_child9_tensor.pkl, duration: 732.0142621994019, host: meow2, gpu: 6
