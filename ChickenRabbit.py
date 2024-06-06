@@ -13,6 +13,8 @@ torch.set_printoptions(profile="full")
 
 from mingpt.utils import set_seed, setup_logging, CfgNode as CN
 
+import pickle
+
 class ChickenRabbitDataset(Dataset):
 
     @staticmethod
@@ -35,7 +37,7 @@ class ChickenRabbitDataset(Dataset):
                 data.append([int(dd) for dd in d])
         return data
 
-    def __init__(self, config, split, seed):
+    def __init__(self, config, split, seed, defined_tensor_train_data=None):
         self.config = config
         # split up all addition problems into either training data or test data
         self.split = split # train / test
@@ -46,7 +48,14 @@ class ChickenRabbitDataset(Dataset):
         perm = torch.tensor(data, dtype=torch.long)
 
         num_test = min(int(len(perm)*0.2), 500) # 20% of the whole dataset, or only up to 500
-        self.ixes = perm[:num_test] if split == 'test' else perm[num_test:]
+        if split == 'test':
+            self.ixes = perm[:num_test]
+        elif defined_tensor_train_data:
+            with open(defined_tensor_train_data, "rb") as file:
+                self.ixes = pickle.load(file)
+            print(f"using defined training data")
+        else:
+            perm[num_test:]
 
     def get_vocab_size(self):
         return 10 # digits 0..9
